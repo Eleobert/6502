@@ -1,3 +1,5 @@
+; http://6502.org/source/general/clearmem.htm
+
 CLRMEM: 
   lda #10
   tax 

@@ -63,3 +63,19 @@ inline auto bne(status& s, uint8_t* bus, uint8_t a, uint8_t b)
         inc(s, s.regs.pc, offset);
     }
 }
+
+inline auto asl(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    shift(s, s.regs.a, -1);
+}
+
+inline auto clc(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    s.flags &= ~flags::carry;
+    // does it set zero flag??
+}
+
+inline auto adc(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+   inc(s, s.regs.a, bus[to_uint16(a, b)]);
+}

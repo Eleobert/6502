@@ -15,11 +15,11 @@ struct mode
 
 namespace modes
 {
-    constexpr mode absla = { 1, 4, 3}; // absolute a
+    constexpr mode abslt = { 1, 4, 3}; // absolute a
     constexpr mode abiwx = { 3, 4, 3}; // absolute indexed with X a,x
     constexpr mode abiwy = { 4, 4, 3}; // absolute indexed with Y a,y
     constexpr mode abind = { 5, 6, 3}; // absolute indirect (a)
-    constexpr mode accua = { 6, 2, 1}; // accumulator A
+    constexpr mode accum = { 6, 2, 1}; // accumulator A
     constexpr mode immed = { 7, 2, 2}; // immidiate #
     constexpr mode impld = { 8, 2, 1}; // implied i
     constexpr mode pcrlr = { 9, 2, 2}; // program counter relative r

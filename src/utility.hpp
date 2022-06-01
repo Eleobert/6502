@@ -50,3 +50,18 @@ inline void str(status& s, uint8_t& to, uint8_t from)
     to = from;
     set_zero_flag(s, to);
 }
+
+// shift and set the cary flag
+inline void shift(status& s, uint8_t& what, int dir)
+{
+    if(dir == -1)
+    {
+        s.flags = (s.flags &  0b01111111) | (what & 0b10000000);
+        what <<= 1;
+    }
+    else if (dir == 1)
+    {
+        s.flags = (s.flags &  0b11111110) | (what & 0b00000001);
+        what >>= 1;
+    }
+}

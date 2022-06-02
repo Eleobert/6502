@@ -48,7 +48,7 @@ struct registers
     uint8_t  a;
     uint8_t  x;
     uint8_t  y;
-    uint8_t  sp;
+    uint8_t  sp = 0xff;
     uint8_t  status;
     uint16_t pc = 0;
 };

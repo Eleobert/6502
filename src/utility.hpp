@@ -16,9 +16,6 @@ inline auto to_uint8(uint16_t value) -> std::tuple<uint8_t, uint8_t>
     return {low, hig};
 }
 
-
-// any operation that produces `0` must to set the
-// zero flag
 inline void set_zero_flag(status& s, uint8_t value)
 {
     if(not value)
@@ -29,6 +26,11 @@ inline void set_zero_flag(status& s, uint8_t value)
     {
         s.flags = s.flags & (~flags::zero);
     }
+}
+
+inline void set_negative_flag(status& s, uint8_t value)
+{
+    s.flags |= flags::negative & value;
 }
 
 // increment
@@ -64,4 +66,29 @@ inline void shift(status& s, uint8_t& what, int dir)
         s.flags = (s.flags &  0b11111110) | (what & 0b00000001);
         what >>= 1;
     }
+}
+
+inline auto cmp(status& s, uint8_t a, uint8_t b)
+{
+    auto lw = a < b;
+    auto eq = a == b;
+
+    using namespace flags;
+    s.flags &= ~(negative | carry | zero);
+    s.flags |= negative * (not (lw || eq)) | (zero * eq) | (carry * (not lw));
+}
+
+
+inline auto push(status& s, uint8_t* bus, uint8_t value)
+{
+    bus[s.regs.sp] = value;
+    s.regs.sp--;
+}
+
+inline auto push(status& s, uint8_t* bus, uint16_t value)
+{
+    auto [addr_low, addr_hig] = to_uint8(value);
+    
+    push(s, bus, addr_low);
+    push(s, bus, addr_hig);
 }

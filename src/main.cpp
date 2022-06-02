@@ -31,11 +31,12 @@ auto print_flags(uint8_t flags)
 auto print_status(const status& s, uint8_t* bus)
 {
     print_flags(s.flags);
-    printf("\nA:%x\tX:%x\tY:%x\tpc:%x\nop:%x\n\n", s.regs.a, s.regs.x, s.regs.y, 
+    //printf("\nA:%x\tX:%x\tY:%x\tpc:%x\nop:%x\n\n", s.regs.a, s.regs.x, s.regs.y, 
+    printf("\nA:%d\tX:%x\tY:%x\tpc:%x\nop:%x\n\n", int(s.regs.a), s.regs.x, s.regs.y, 
            s.regs.pc, bus[s.regs.pc]);
 }
 
-
+// convert operands to the address of the actual operands
 auto operands(uint8_t* bus, const status& s, mode m) -> std::tuple<uint8_t, uint8_t>
 {
     // if this is the last instruction and we are in the last address
@@ -43,10 +44,23 @@ auto operands(uint8_t* bus, const status& s, mode m) -> std::tuple<uint8_t, uint
     const auto pc = s.regs.pc;
     auto low = bus[pc + 1], hig = bus[pc + 2];
 
-    if(m == modes::abiwy)
+    if(m == modes::abiwx || m == modes::abiwy)
     {
-        auto addr = to_uint16(low, hig) + s.regs.y;
+        auto idx  = (m == modes::abiwx) ? s.regs.x: s.regs.y;
+        auto addr = to_uint16(low, hig) + idx;
         std::tie(low, hig) = to_uint8(addr);
+    }
+    else if(m == modes::abslt) 
+    {
+    }
+    else if(m == modes::zrpag)
+    {
+
+    } 
+    else if(m == modes::immed)
+    {
+        // address will point to operands 
+        std::tie(low, hig) = to_uint8(s.regs.pc + 1);
     }
     else if(m == modes::pcrlr)
     {

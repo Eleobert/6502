@@ -3,7 +3,10 @@
 #include "utility.hpp"
 
 #include <fmt/core.h>
+#include <fmt/ranges.h>
 
+#include <ranges>
+#include <span>
 #include <cerrno>
 #include <cstdint>
 #include <cstdio>
@@ -145,6 +148,7 @@ auto read_file(const std::string& name)
     return result;
 }
 
+
 int main(int argc, char** argv)
 {
     using namespace std::literals;
@@ -160,16 +164,24 @@ int main(int argc, char** argv)
     auto s       = status();
     auto ncycles = 0;
 
-    fmt::print("{}: {:20} | {}\n", "Addr", "Instruction", "A  X  Y  SP NOUBDIZC");
-    
+
+    fmt::print("{}: {:20} | {} | {}\n", "Addr", "Instruction", 
+        "A  X  Y  SP NOUBDIZC", "Stack");
+
     while(true)
     {
-        auto hex = fmt_hexcode(s.regs.pc, text.data());
-        auto mmc = fmt_mmenoic(s, text.data());
-        auto rgs = fmt::format("{:02X} {:02X} {:02X} {:02X} {:08b}", s.regs.a, s.regs.x, s.regs.y, s.regs.sp, s.flags);
+        using namespace std::ranges::views;
+        
+        const auto hex = fmt_hexcode(s.regs.pc, text.data());
+        const auto mmc = fmt_mmenoic(s, text.data());
+        const auto rgs = fmt::format("{:02X} {:02X} {:02X} {:02X} {:08b}",  
+            s.regs.a, s.regs.x, s.regs.y, s.regs.sp, s.flags);
+        const auto sts = std::min(5, 0xff - s.regs.sp);
+        const auto stk = text | drop(s.regs.sp + 1) | take(sts) | reverse;
 
-        fmt::print("{:04X}: {} {:11} | {}\n", s.regs.pc, hex, mmc, rgs);
+        fmt::print("{:04X}: {} {:11} | {} | {}\n", s.regs.pc, hex, mmc, rgs, stk);
+        
         std::tie(s, ncycles) = run(s, text.data());
-        std::this_thread::sleep_for(0.0s * ncycles);
+        // std::this_thread::sleep_for(0.0s * ncycles);
     }
 }

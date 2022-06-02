@@ -2,39 +2,20 @@
 #include "lookup.hpp"
 #include "utility.hpp"
 
+#include <fmt/core.h>
+
 #include <cerrno>
 #include <cstdint>
 #include <cstdio>
 #include <fstream>
 #include <ios>
-#include <sys/types.h>
+#include <string>
 #include <tuple>
 #include <thread>
 #include <algorithm>
 #include <vector>
 #include <cstring>
 
-
-auto print_flags(uint8_t flags)
-{
-    uint8_t f = 0b10000000;
-
-    for(auto i = 0; i < 8; i++)
-    {
-        char c = (flags & f) ? '1': '0';
-        std::putchar(c);
-        flags = flags << 1;
-    }
-}
-
-
-auto print_status(const status& s, uint8_t* bus)
-{
-    print_flags(s.flags);
-    //printf("\nA:%x\tX:%x\tY:%x\tpc:%x\nop:%x\n\n", s.regs.a, s.regs.x, s.regs.y, 
-    printf("\nA:%d\tX:%x\tY:%x\tpc:%x\nop:%x\n\n", int(s.regs.a), s.regs.x, s.regs.y, 
-           s.regs.pc, bus[s.regs.pc]);
-}
 
 // convert operands to the address of the actual operands
 auto operands(uint8_t* bus, const status& s, mode m) -> std::tuple<uint8_t, uint8_t>
@@ -90,8 +71,60 @@ auto run(status s, uint8_t* bus) -> std::tuple<status, uint8_t>
 
 }
 
+auto fmt_hexcode(uint16_t pc, uint8_t* bus)
+{
+    const auto opcode     = bus[pc];
+    const auto [op, mode] = db[opcode];
+    auto result = fmt::format("{:0X}", bus[pc]);
+    
+    const auto low = (mode.size > 1)? bus[pc + 1]: ' ';
+    const auto hig = (mode.size > 2)? bus[pc + 2]: ' ';
+    
+    if(mode.size == 1)
+    {
+        return fmt::format("{:02X}      ", bus[pc]);
+    }
+    else if(mode.size == 2)
+    {
+        return fmt::format("{:02X} {:02X}   ", bus[pc], bus[pc + 1]);
+    }
+    else if(mode.size == 3)
+    {
+        return fmt::format("{:02X} {:02X} {:02X}", bus[pc], bus[pc + 1], bus[pc + 2]);
+    }
+    std::abort();
+}
 
-static auto read_file(const std::string& name)
+
+auto fmt_mmenoic(const status& s, uint8_t* bus)
+{
+    auto opcode     = bus[s.regs.pc];
+    auto result     = names[opcode];
+    auto [op, mode] = db[opcode];
+    const auto low = bus[s.regs.pc + 1];
+    const auto hig = bus[s.regs.pc + 2];
+    
+    if(mode == modes::immed || mode == modes::pcrlr)
+    {
+        result += fmt::format(" #{:02X}", low);
+    }
+    else if(mode == modes::abslt)
+    {
+        result += fmt::format(" #{:04X}", to_uint16(low, hig));
+    }
+    else if(mode == modes::abiwy)
+    {
+        result += fmt::format(" #{:04X},Y", to_uint16(low, hig));
+    }
+    else if(mode == modes::abiwx)
+    {
+        result += fmt::format(" #{:04X},X", to_uint16(low, hig));
+    }
+    return result;
+}
+
+
+auto read_file(const std::string& name)
 {
     std::ifstream ifs(name, std::ios::binary | std::ios::ate);
 
@@ -127,12 +160,16 @@ int main(int argc, char** argv)
     auto s       = status();
     auto ncycles = 0;
 
-    print_status(s, text.data());
+    fmt::print("{}: {:20} | {}\n", "Addr", "Instruction", "A  X  Y  SP NOUBDIZC");
     
     while(true)
     {
+        auto hex = fmt_hexcode(s.regs.pc, text.data());
+        auto mmc = fmt_mmenoic(s, text.data());
+        auto rgs = fmt::format("{:02X} {:02X} {:02X} {:02X} {:08b}", s.regs.a, s.regs.x, s.regs.y, s.regs.sp, s.flags);
+
+        fmt::print("{:04X}: {} {:11} | {}\n", s.regs.pc, hex, mmc, rgs);
         std::tie(s, ncycles) = run(s, text.data());
-        print_status(s, text.data());
-        std::this_thread::sleep_for(0.1s * ncycles);
+        std::this_thread::sleep_for(0.0s * ncycles);
     }
 }

@@ -100,12 +100,12 @@ inline auto clc(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 
 inline auto adc(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
-   inc(s, s.regs.a, bus[to_uint16(a, b)]);
+   add(s, s.regs.a, bus[to_uint16(a, b)]);
 }
 
 inline auto sbc(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
-   inc(s, s.regs.a, -bus[to_uint16(a, b)]);
+   add(s, s.regs.a, -bus[to_uint16(a, b)]);
 }
 
 

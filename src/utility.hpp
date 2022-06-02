@@ -53,13 +53,21 @@ inline void set_negt_flag(status& s, uint8_t value)
 }
 
 // increment
-inline void inc(status& s, uint8_t& value, uint8_t steps)
+inline void add(status& s, uint8_t& value, uint8_t steps)
 {
     uint8_t res = value + steps;
     set_over_flag(s, value, steps, res);
     set_zero_flag(s, res);
     set_negt_flag(s, res);
     set_cary_flag(s, value, res);
+    value = res;
+}
+
+inline void inc(status& s, uint8_t& value, uint8_t steps)
+{
+    uint8_t res = value + steps;
+    set_zero_flag(s, res);
+    set_negt_flag(s, res);
     value = res;
 }
 

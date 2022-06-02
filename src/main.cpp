@@ -203,7 +203,7 @@ int main(int argc, char** argv)
             s.regs.a, s.regs.x, s.regs.y, s.regs.sp, s.flags);
         const auto stk = fmt_stack(s, text);
 
-        fmt::print("{:04X}: {} {:11} | {} | {} ", s.regs.pc, hex, mmc, rgs, stk);
+        fmt::print("{:04X}: {} {:11} | {} | {} \n", s.regs.pc, hex, mmc, rgs, stk);
         
         std::tie(s, ncycles) = run(s, text.data());
         // std::this_thread::sleep_for(0.0s * ncycles);

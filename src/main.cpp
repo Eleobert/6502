@@ -148,6 +148,21 @@ auto read_file(const std::string& name)
     return result;
 }
 
+auto fmt_stack(const status& s, const std::vector<uint8_t>& text)
+{
+    // fmt still does not support formatting range elements
+    using namespace std::ranges::views;
+    const auto size  = std::min(5, 0xff - s.regs.sp);
+    const auto stack = std::span(&text[0xff - size + 1], size) | reverse;
+    auto result = stack.empty()? "[": fmt::format("[{:02X}", stack.front());
+    
+    for(const auto& e: stack | drop(1))
+    {
+        result += fmt::format(" {:02X}", e);
+    }
+    return result + "]";
+}
+
 
 int main(int argc, char** argv)
 {
@@ -176,8 +191,7 @@ int main(int argc, char** argv)
         const auto mmc = fmt_mmenoic(s, text.data());
         const auto rgs = fmt::format("{:02X} {:02X} {:02X} {:02X} {:08b}",  
             s.regs.a, s.regs.x, s.regs.y, s.regs.sp, s.flags);
-        const auto sts = std::min(5, 0xff - s.regs.sp);
-        const auto stk = text | drop(s.regs.sp + 1) | take(sts) | reverse;
+        const auto stk = fmt_stack(s, text);
 
         fmt::print("{:04X}: {} {:11} | {} | {}\n", s.regs.pc, hex, mmc, rgs, stk);
         

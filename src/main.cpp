@@ -19,7 +19,11 @@
 #include <vector>
 #include <cstring>
 
-
+// TODO: pass pointers instead of low and high, if passing
+// a value is needed point to a 'static' variable to hold the
+// value. This is to avoid having 2 functions for the same
+// opcode, as for example lsr which can operate on accumulator
+// or operand
 // convert operands to the address of the actual operands
 auto operands(uint8_t* bus, const status& s, mode m) -> std::tuple<uint8_t, uint8_t>
 {
@@ -39,7 +43,7 @@ auto operands(uint8_t* bus, const status& s, mode m) -> std::tuple<uint8_t, uint
     }
     else if(m == modes::zrpag)
     {
-
+        hig = 0;
     } 
     else if(m == modes::immed)
     {
@@ -48,8 +52,10 @@ auto operands(uint8_t* bus, const status& s, mode m) -> std::tuple<uint8_t, uint
     }
     else if(m == modes::pcrlr)
     {
-        // TODO: should I solve the aaddres here too?
-        //const auto offset = static_cast<int8_t>(low);
+        // cannot simply clear `hig`: need to taake into 
+        // conasideration the signal
+        uint16_t adr_neg = s.regs.pc + int8_t(low);
+        std::tie(low, hig) = to_uint8(adr_neg);
     }
 
     return {low, hig};
@@ -107,21 +113,25 @@ auto fmt_mmenoic(const status& s, uint8_t* bus)
     const auto low = bus[s.regs.pc + 1];
     const auto hig = bus[s.regs.pc + 2];
     
-    if(mode == modes::immed || mode == modes::pcrlr)
+    if(mode == modes::immed)
     {
         result += fmt::format(" #{:02X}", low);
     }
+    else if(mode == modes::zrpag || mode == modes::pcrlr)
+    {
+        result += fmt::format(" {:02X}", low);
+    }
     else if(mode == modes::abslt)
     {
-        result += fmt::format(" #{:04X}", to_uint16(low, hig));
+        result += fmt::format(" {:04X}", to_uint16(low, hig));
     }
     else if(mode == modes::abiwy)
     {
-        result += fmt::format(" #{:04X},Y", to_uint16(low, hig));
+        result += fmt::format(" {:04X},Y", to_uint16(low, hig));
     }
     else if(mode == modes::abiwx)
     {
-        result += fmt::format(" #{:04X},X", to_uint16(low, hig));
+        result += fmt::format(" {:04X},X", to_uint16(low, hig));
     }
     return result;
 }
@@ -193,7 +203,7 @@ int main(int argc, char** argv)
             s.regs.a, s.regs.x, s.regs.y, s.regs.sp, s.flags);
         const auto stk = fmt_stack(s, text);
 
-        fmt::print("{:04X}: {} {:11} | {} | {}\n", s.regs.pc, hex, mmc, rgs, stk);
+        fmt::print("{:04X}: {} {:11} | {} | {} ", s.regs.pc, hex, mmc, rgs, stk);
         
         std::tie(s, ncycles) = run(s, text.data());
         // std::this_thread::sleep_for(0.0s * ncycles);

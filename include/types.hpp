@@ -36,7 +36,7 @@ namespace flags
     constexpr uint8_t carry     = 1 << 0;
     constexpr uint8_t zero      = 1 << 1;
     constexpr uint8_t interrupt = 1 << 2;
-    constexpr uint8_t dec       = 1 << 3;
+    constexpr uint8_t decimal   = 1 << 3;
     constexpr uint8_t brk       = 1 << 4;
     constexpr uint8_t empty     = 1 << 5;
     constexpr uint8_t overflow  = 1 << 6;

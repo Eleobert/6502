@@ -16,7 +16,8 @@ inline auto lda(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
     str(s, s.regs.a, bus[to_uint16(a, b)]);
     // I am not sure is it is only lda that does this
-    s.flags |=  (flags::negative | flags::zero) & s.regs.a;
+    s.flags |=  flags::negative & s.regs.a;
+    s.flags |=  flags::zero * (not s.regs.a);
 }
 
 inline auto ldx(status& s, uint8_t* bus, uint8_t a, uint8_t b)
@@ -104,12 +105,24 @@ inline auto bmi(status& s, uint8_t* bus, uint8_t a, uint8_t b)
     branch(s, (s.flags & flags::negative), a, b);
 }
 
+
+inline auto bpl(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    branch(s, not (s.flags & flags::negative), a, b);
+}
+
+
 inline auto bcc(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
     branch(s, not (s.flags & flags::carry), a, b);
 }
 
 inline auto bvs(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    branch(s, (s.flags & flags::overflow), a, b);
+}
+
+inline auto bvc(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
     branch(s, not (s.flags & flags::overflow), a, b);
 }
@@ -173,19 +186,26 @@ inline auto eor(status& s, uint8_t* bus, uint8_t a, uint8_t b)
     set_negt_flag(s, s.regs.a);
 }
 
-// inline auto anD(status& s, uint8_t* bus, uint8_t a, uint8_t b)
-// {
-//     s.regs.a &= bus[to_uint16(a, b)];
-//     set_zero_flag(s, s.regs.a);
-//     set_negt_flag(s, s.regs.a);
-// }
+inline auto ora(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    s.regs.a |= bus[to_uint16(a, b)];
+    set_zero_flag(s, s.regs.a);
+    set_negt_flag(s, s.regs.a);
+}
+
+inline auto anD(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    s.regs.a &= bus[to_uint16(a, b)];
+    set_zero_flag(s, s.regs.a);
+    set_negt_flag(s, s.regs.a);
+}
 
 inline auto bit(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
     auto value = bus[to_uint16(a, b)];
     s.regs.a &= value;
     
-    s.flags &= not (flags::negative | flags::zero | flags::overflow);
+    s.flags &= ~(flags::negative | flags::zero | flags::overflow);
     s.flags |=  (flags::negative | flags::overflow) & value;
     set_zero_flag(s, s.regs.a);
     
@@ -203,9 +223,19 @@ inline auto pha(status& s, uint8_t* bus, uint8_t a, uint8_t b)
     push(s, bus, s.regs.a);
 }
 
+inline auto php(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    push(s, bus, s.flags);
+}
+
 inline auto pla(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
     pull(s, bus, s.regs.a);
+}
+
+inline auto plp(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    pull(s, bus, s.flags);
 }
 
 inline auto rts(status& s, uint8_t* bus, uint8_t a, uint8_t b)
@@ -217,4 +247,19 @@ inline auto rts(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 inline auto nop(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
 
+}
+
+inline auto sei(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    s.flags |= flags::interrupt;
+}
+
+inline auto sed(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    s.flags |= flags::decimal;
+}
+
+inline auto cld(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    s.flags &= ~flags::decimal;
 }

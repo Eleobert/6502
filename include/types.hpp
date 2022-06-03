@@ -50,7 +50,7 @@ struct registers
     uint8_t  y;
     uint8_t  sp = 0xff;
     uint8_t  status;
-    uint16_t pc = 0;
+    uint16_t pc = 0xc000;
 };
 
 struct status

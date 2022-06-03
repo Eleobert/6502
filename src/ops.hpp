@@ -14,22 +14,29 @@ inline auto noi(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 
 inline auto lda(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
-    s.regs.a = bus[to_uint16(a, b)];
+    str(s, s.regs.a, bus[to_uint16(a, b)]);
+    // I am not sure is it is only lda that does this
+    s.flags |=  (flags::negative | flags::zero) & s.regs.a;
 }
 
 inline auto ldx(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
-   s.regs.x = bus[to_uint16(a, b)];
+   str(s, s.regs.x, bus[to_uint16(a, b)]);
 }
 
 inline auto ldy(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
-   s.regs.y = bus[to_uint16(a, b)];
+    str(s, s.regs.y, bus[to_uint16(a, b)]);
 }
 
 inline auto sta(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
-    bus[to_uint16(a, b)] = s.regs.a;
+    str(s, bus[to_uint16(a, b)], s.regs.a);
+}
+
+inline auto stx(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    str(s, bus[to_uint16(a, b)], s.regs.x);
 }
 
 inline auto sty(status& s, uint8_t* bus, uint8_t a, uint8_t b)
@@ -72,6 +79,10 @@ inline auto dey(status& s, uint8_t* bus, uint8_t a, uint8_t b)
     inc(s, s.regs.y, -1);
 }
 
+inline auto jmp(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    s.regs.pc = to_uint16(a, b) - 3;
+}
 
 inline auto beq(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
@@ -98,6 +109,10 @@ inline auto bcc(status& s, uint8_t* bus, uint8_t a, uint8_t b)
     branch(s, not (s.flags & flags::carry), a, b);
 }
 
+inline auto bvs(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    branch(s, not (s.flags & flags::overflow), a, b);
+}
 
 inline auto asl(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
@@ -113,7 +128,16 @@ inline auto lar(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 inline auto clc(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
     s.flags &= ~flags::carry;
-    // does it set zero flag??
+}
+
+inline auto clv(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    s.flags &= ~flags::overflow;
+}
+
+inline auto sec(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    s.flags |= flags::carry;
 }
 
 inline auto adc(status& s, uint8_t* bus, uint8_t a, uint8_t b)
@@ -149,6 +173,13 @@ inline auto eor(status& s, uint8_t* bus, uint8_t a, uint8_t b)
     set_negt_flag(s, s.regs.a);
 }
 
+// inline auto anD(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+// {
+//     s.regs.a &= bus[to_uint16(a, b)];
+//     set_zero_flag(s, s.regs.a);
+//     set_negt_flag(s, s.regs.a);
+// }
+
 inline auto bit(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
     auto value = bus[to_uint16(a, b)];
@@ -181,4 +212,9 @@ inline auto rts(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
     s.regs.sp += 2;
     s.regs.pc = to_uint16(bus[s.regs.sp], bus[s.regs.sp - 1]);
+}
+
+inline auto nop(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+
 }

@@ -99,7 +99,7 @@ inline void shift(status& s, uint8_t& what, int dir)
 
 }
 
-inline auto cmp(status& s, uint8_t a, uint8_t b)
+inline auto compare(status& s, uint8_t a, uint8_t b)
 {
     auto lw = a < b;
     auto eq = a == b;
@@ -122,4 +122,26 @@ inline auto push(status& s, uint8_t* bus, uint16_t value)
     
     push(s, bus, addr_low);
     push(s, bus, addr_hig);
+}
+
+
+inline auto pull(status& s, uint8_t* bus, uint8_t& value)
+{
+    s.regs.sp++;
+    value = bus[s.regs.sp];
+}
+
+inline auto pull(status& s, uint8_t* bus, uint16_t& value)
+{
+    uint8_t addr_low, addr_hig;
+    pull(s, bus, addr_low);
+    pull(s, bus, addr_hig);
+
+    value =  to_uint16(addr_low, addr_hig);
+}
+
+
+inline auto branch(status& s, bool cond, uint8_t a, uint8_t b)
+{
+    s.regs.pc = (cond)? to_uint16(a, b): s.regs.pc;
 }

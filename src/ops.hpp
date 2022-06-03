@@ -32,6 +32,11 @@ inline auto sta(status& s, uint8_t* bus, uint8_t a, uint8_t b)
     bus[to_uint16(a, b)] = s.regs.a;
 }
 
+inline auto sty(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    bus[to_uint16(a, b)] = s.regs.y;
+}
+
 inline auto tax(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
     s.regs.x = s.regs.a;
@@ -68,16 +73,29 @@ inline auto dey(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 }
 
 
+inline auto beq(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    branch(s, (s.flags & flags::zero), a, b);
+}
+
 inline auto bne(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
-    s.regs.pc = not (s.flags & flags::zero)? to_uint16(a, b): s.regs.pc;
+    branch(s, not (s.flags & flags::zero), a, b);
 }
 
 inline auto bcs(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
-    const auto offset = static_cast<int8_t>(a);
+    branch(s, (s.flags & flags::carry), a, b);
+}
 
-    s.regs.pc = (s.flags & flags::carry)? to_uint16(a, b): s.regs.pc;
+inline auto bmi(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    branch(s, (s.flags & flags::negative), a, b);
+}
+
+inline auto bcc(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    branch(s, not (s.flags & flags::carry), a, b);
 }
 
 
@@ -108,15 +126,19 @@ inline auto sbc(status& s, uint8_t* bus, uint8_t a, uint8_t b)
    add(s, s.regs.a, -bus[to_uint16(a, b)]);
 }
 
+inline auto cmp(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    compare(s, s.regs.a, bus[to_uint16(a, b)]);
+}
 
 inline auto cpx(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
-    cmp(s, s.regs.x, bus[to_uint16(a, b)]);
+    compare(s, s.regs.x, bus[to_uint16(a, b)]);
 }
 
 inline auto cpy(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
-    cmp(s, s.regs.y, bus[to_uint16(a, b)]);
+    compare(s, s.regs.y, bus[to_uint16(a, b)]);
 }
 
 
@@ -127,6 +149,17 @@ inline auto eor(status& s, uint8_t* bus, uint8_t a, uint8_t b)
     set_negt_flag(s, s.regs.a);
 }
 
+inline auto bit(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    auto value = bus[to_uint16(a, b)];
+    s.regs.a &= value;
+    
+    s.flags &= not (flags::negative | flags::zero | flags::overflow);
+    s.flags |=  (flags::negative | flags::overflow) & value;
+    set_zero_flag(s, s.regs.a);
+    
+}
+
 inline auto jsr(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
     push(s, bus, uint16_t(s.regs.pc + 2));
@@ -134,9 +167,14 @@ inline auto jsr(status& s, uint8_t* bus, uint8_t a, uint8_t b)
     s.regs.pc = to_uint16(a, b) - 3;
 }
 
-inline auto bcc(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+inline auto pha(status& s, uint8_t* bus, uint8_t a, uint8_t b)
 {
-    s.regs.pc = not (s.flags & flags::carry)? to_uint16(a, b): s.regs.pc;
+    push(s, bus, s.regs.a);
+}
+
+inline auto pla(status& s, uint8_t* bus, uint8_t a, uint8_t b)
+{
+    pull(s, bus, s.regs.a);
 }
 
 inline auto rts(status& s, uint8_t* bus, uint8_t a, uint8_t b)

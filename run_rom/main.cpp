@@ -3,12 +3,14 @@
 #include "utility.hpp"
 #include "run.hpp"
 
+#include <cctype>
 #include <fmt/core.h>
 #include <fmt/ranges.h>
 
 #include <ranges>
 #include <span>
 #include <fstream>
+#include <vector>
 
 
 auto fmt_hexcode(uint16_t pc, uint8_t* bus)
@@ -64,6 +66,10 @@ auto fmt_mmenoic(const status& s, uint8_t* bus)
     {
         result += fmt::format(" {:04X},X", to_uint16(low, hig));
     }
+    else if(mode == modes::zpsiy)
+    {
+        result += fmt::format(" ({:02X}),Y", low);
+    }
     return result;
 }
 
@@ -105,6 +111,33 @@ auto fmt_stack(const status& s, const std::vector<uint8_t>& text)
     return result + "]";
 }
 
+auto dump_memory(const std::vector<uint8_t>& text)
+{
+    fmt::print("\n");
+
+    for(auto i = 0; i < 16; i++)
+    {
+        fmt::print("{:04X}:", i * 16);
+        auto row = std::span(&text[i * 16], 16);
+        for(auto j = 0; j < 16; j++)
+        {
+            if(j == 8) 
+                fmt::print(" ");
+                
+            fmt::print(" {:02X}", row[j]);
+        }
+        fmt::print(" |");
+        for(auto j = 0; j < 16; j++)
+        {
+            char c = std::isalpha(row[j])? row[j]: '.';
+            fmt::print("{}", c);
+        }
+        fmt::print("|\n");
+    }
+    fmt::print("\n");
+    
+}
+
 
 int main(int argc, char** argv)
 {
@@ -139,5 +172,9 @@ int main(int argc, char** argv)
         
         std::tie(s, ncycles) = run(s, text.data());
         // std::this_thread::sleep_for(0.0s * ncycles);
+
+        if(text[s.regs.pc] == 0xff)
+            break;
     }
+    dump_memory(text);
 }

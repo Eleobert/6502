@@ -1,3 +1,5 @@
+#include "types.hpp"
+#include <cstdint>
 #include <gtest/gtest.h>
 
 #include <run.hpp>
@@ -9,6 +11,10 @@
 #include <ios>
 #include <cstring>
 #include <numeric>
+#include <algorithm>
+#include <span>
+#include <random>
+#include <ranges>
 
 
 auto read_file(const std::string& name)
@@ -78,6 +84,33 @@ TEST(TEST6502, DOW)
     run_program(s, text);
 
     EXPECT_EQ(s.regs.a, 0x04);
+}
+
+
+
+TEST(TEST6502, BUBLESORT8)
+{
+    auto text = read_file("../examples/bublesort8");
+    using namespace std::ranges::views;
+    using namespace std::ranges;
+
+    auto sorted = [&text](const std::vector<uint8_t>& vec)
+    {
+        status s;
+        const auto offset = 0x2a;
+        auto section = std::span(&text[offset], vec.size());
+        text[offset - 1] = vec.size();
+        copy(vec, section.begin());
+        run_program(s, text);
+        for(auto e: section) printf("%d:", int(e));
+        std::printf("\n");
+        return is_sorted(section);
+    };
+
+    EXPECT_TRUE(sorted(std::vector<uint8_t>{0, 0, 0, 0}));
+    EXPECT_TRUE(sorted(std::vector<uint8_t>{255, 255, 0, 255}));
+    EXPECT_TRUE(sorted(std::vector<uint8_t>{5, 2, 4, 8, 13}));
+    // EXPECT_TRUE(sorted(std::vector<uint8_t>{0})); // fails
 }
 
 

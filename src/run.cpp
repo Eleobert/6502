@@ -41,6 +41,12 @@ auto operands(uint8_t* bus, const status& s, mode m) -> std::tuple<uint8_t, uint
         uint16_t adr_neg = s.regs.pc + int8_t(low);
         std::tie(low, hig) = to_uint8(adr_neg);
     }
+    else if(m == modes::zpsiy)
+    {
+        hig = 0;
+        auto addr = to_uint16(low, hig) + s.regs.y;
+        std::tie(low, hig) = to_uint8(addr);
+    }
 
     return {low, hig};
 }
